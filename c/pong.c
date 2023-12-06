@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <curses.h>
+#include <sys/time.h>
+#include <unistd.h>
 
 
 Bola* criarBola(Tela* tela){
@@ -53,7 +55,6 @@ Tela* criarTela(int largura, int altura){
 
 int* capturarMovimento(int* movimento){
 	
-
 	int acao = getch();
 
 	switch(acao){
@@ -79,17 +80,15 @@ int* capturarMovimento(int* movimento){
 
 
 void moverBarras(Tela* tela, Barra* barraEsquerda, Barra* barraDireita){
-	
+
 	int movimento[] = {0, 0};
 	int* novasPosicoes = capturarMovimento(movimento);
-
+	
 	if(((barraEsquerda->posY + *novasPosicoes) >= 1) && ((barraEsquerda->posY + barraEsquerda->tamanho + *novasPosicoes) < tela->altura)){
 		barraEsquerda->posY += *novasPosicoes;
 	}
-
 	if(((barraDireita->posY + *(novasPosicoes+1)) >= 1) && ((barraDireita->posY + barraDireita->tamanho + *(novasPosicoes+1)) < tela->altura)){
-	barraDireita->posY += *(novasPosicoes+1);
-
+			barraDireita->posY += *(novasPosicoes+1);
 	}
 
 }
@@ -127,7 +126,7 @@ int contato(Tela* tela, Barra* barra, Bola* bola){
 
 	if((bola->posX + bola->velocidade[0]) == barra->posX){
 
-		if((barra->posY <= bola->posY) && (bola->posY < (barra->posY + barra->tamanho)))
+		if(((barra->posY - 1) <= bola->posY) && (bola->posY < (barra->posY + barra->tamanho)))
 			contato = 1;
 
 	} else if(((bola->posY + bola->velocidade[1]) == 0) || ((bola->posY + bola->velocidade[1]) == (tela->altura - 1))){
@@ -198,17 +197,39 @@ void gameLoop(Tela* tela, Barra* barraEsquerda, Barra* barraDireita, Bola* bola)
 	int cont[2];
 	int game = 1;
 	char controle = ' ';
+	float time[] = {0, 0};
+	struct timeval start, end;
 
-	while(game){
+	while(game){		
+				
+		gettimeofday(&start, NULL);
 
-		desenharTela(tela, barraEsquerda, barraDireita, bola);		
 		cont[0] = contato(tela, barraEsquerda, bola);
 		cont[1] = contato(tela, barraDireita, bola);
 		
 		moverBarras(tela, barraEsquerda, barraDireita);
-		atualizarVelocidadeBola(tela, bola, cont);
-		atualizarPosicaoBola(bola);
+
+		gettimeofday(&end, NULL);
 		
+
+		if(time[0] < 0.1){
+			time[0] += (end.tv_sec - start.tv_sec) + (1e-6)*(float)(end.tv_usec - start.tv_usec);
+			time[1] += (end.tv_sec - start.tv_sec) + (1e-6)*(float)(end.tv_usec - start.tv_usec);
+
+			continue;
+		} else{
+			desenharTela(tela, barraEsquerda, barraDireita, bola);
+			time[0] = 0;
+		}
+		
+		if(time[1] < 0.3){
+			
+			time[1] += (end.tv_sec - start.tv_sec) + (1e-6)*(float)(end.tv_usec - start.tv_usec);
+			continue;
+		} else{
+			atualizarVelocidadeBola(tela, bola, cont);
+			atualizarPosicaoBola(bola);
+		}
 
 		if(gameOver(tela, bola)){
 

@@ -14,7 +14,7 @@ int main(){
 	initscr();
 	noecho();
 	cbreak();
-	timeout(500);
+	timeout(1);
 
 	gameLoop(tela, barraEsquerda, barraDireita, bola);
 	
