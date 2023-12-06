@@ -18,4 +18,4 @@ Use the makefile
 
 Game :D
 
-`./pong`
+`./game`
